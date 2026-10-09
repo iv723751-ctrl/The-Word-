@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10141c">
+<title>THE WORD</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#10141c;color:#f3f5f8;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column}
+header{height:68px;padding:0 14px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;border-bottom:1px solid #29303b}
+button{border:0;color:#f5f7fa;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.call{width:36px;height:36px;border-radius:50%;background:#202733}.brand{text-align:center;font-size:20px;letter-spacing:4px}.spacer{width:40px}
+#chat{flex:1;width:100%;max-width:760px;margin:0 auto;padding:20px 16px;overflow-y:auto}
+.row{display:flex;gap:10px;align-items:flex-start;margin:14px 0}.avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:#202b3b;color:#8ebeff;display:flex;align-items:center;justify-content:center;font-size:20px}
+.bubble{background:#202733;padding:12px 14px;border-radius:18px;line-height:1.5;max-width:88%;overflow-wrap:anywhere;white-space:pre-wrap}.user{justify-content:flex-end}.user .bubble{background:#2b4e7c}
+.bottom{width:100%;max-width:800px;margin:0 auto;padding:10px 12px max(14px,env(safe-area-inset-bottom))}
+form{display:flex;align-items:center;gap:8px}.round{width:40px;height:40px;flex:0 0 40px;border-radius:50%;background:#202733}
+.inputbox{min-width:0;flex:1;display:flex;align-items:center;gap:6px;padding:0 12px;min-height:50px;border-radius:28px;background:#202733}
+input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#fff;font-size:16px;padding:12px 0}input::placeholder{color:#9aa4b2}
+.mic{background:transparent;padding:5px;color:#dce3ec}.send{width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:#4d83f5}
+#status{text-align:center;color:#9aa4b2;font-size:12px;padding:8px 4px 0}
+button:disabled{opacity:.55}
+</style>
+</head>
+<body>
+<header>
+<button class="call" id="call" aria-label="Llamadas de voz aún no configuradas" title="Llamadas de voz aún no configuradas">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.19 2.46.56 3.58a1 1 0 0 1-.25 1.01l-2.19 2.2z"/></svg>
+</button><div class="brand">THE WORD</div><div class="spacer"></div>
+</header>
+<main id="chat" aria-live="polite">
+<div class="row"><div class="avatar">✦</div><div class="bubble">Hola, soy THE WORD. ¿En qué puedo ayudarte?</div></div>
+</main>
+<div class="bottom">
+<form id="form">
+<div class="inputbox">
+<input id="message" placeholder="Escribe un mensaje..." autocomplete="off" required>
+<button class="mic" type="button" id="mic" aria-label="Dictar mensaje" title="Dictar mensaje">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11z"/></svg>
+</button></div>
+<button class="send" id="send" aria-label="Enviar mensaje" title="Enviar mensaje">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+</button>
+</form>
+<div id="status">IA conectada al servidor · Las llamadas aún no están activadas</div>
+</div>
+<script>
+const chat=document.getElementById('chat'), form=document.getElementById('form'), input=document.getElementById('message'), statusText=document.getElementById('status'), send=document.getElementById('send');
+function add(text,isUser=false){const row=document.createElement('div');row.className='row'+(isUser?' user':'');if(!isUser){const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent='✦';row.appendChild(avatar)}const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=text;row.appendChild(bubble);chat.appendChild(row);chat.scrollTop=chat.scrollHeight}
+form.addEventListener('submit',async e=>{e.preventDefault();const message=input.value.trim();if(!message)return;add(message,true);input.value='';send.disabled=true;statusText.textContent='THE WORD está pensando…';try{const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,personality:'Amigable'})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Error al conectar');add(data.reply||'No recibí una respuesta.')}catch(err){add('No pude conectar con el cerebro de THE WORD. '+err.message)}finally{send.disabled=false;statusText.textContent='IA conectada al servidor · Las llamadas aún no están activadas';input.focus()}});
+document.getElementById('call').addEventListener('click',()=>{statusText.textContent='Las llamadas de voz se añadirán en otra etapa.'});
+document.getElementById('mic').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){statusText.textContent='Usa el micrófono del teclado de Android para dictar.';return}const r=new SR();r.lang='es-CO';r.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript};r.onerror=()=>statusText.textContent='Revisa los permisos del micrófono.';r.start()});
+</script>
+</body>
+</html>
